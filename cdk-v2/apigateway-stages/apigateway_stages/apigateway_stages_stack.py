@@ -23,6 +23,16 @@ class ApigatewayStagesStack(Stack):
             handler=my_lambda,
             proxy=False,
             deploy=False,  # Evita el despliegue automático
+            default_cors_preflight_options=apigateway.CorsOptions(
+                allow_origins=apigateway.Cors.ALL_ORIGINS,  # Permite todos los orígenes
+                allow_methods=apigateway.Cors.ALL_METHODS,  # Permite todos los métodos
+                allow_headers=[
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
+                ],  # Especifica las cabeceras permitidas
+            ),
         )
 
         # Crea el primer despliegue para el stage 'dev'
