@@ -24,13 +24,32 @@ class ApigatewayStagesStack(Stack):
             description="My api gateway",
         )
         # Integración de Lambda para un endpoint específico
-        get_integration = apigateway.LambdaIntegration(
-            my_lambda, request_templates={"application/json": '{ "statusCode": "200" }'}
-        )
+        get_integration = apigateway.LambdaIntegration(my_lambda)
 
         # Definir un recurso y método GET
         api_resource = api.root.add_resource("myresource")
-        api_resource.add_method("GET", get_integration)
+        api_method = api_resource.add_method("GET", get_integration)
+
+        # Crear una API Key
+        api_key = api.add_api_key("ApiKey", api_key_name="MyApiKey")
+
+        # Crear un plan de uso y asociar la API Key y el método
+        usage_plan = api.add_usage_plan(
+            "UsagePlan",
+            name="MyUsagePlan",
+            throttle=apigateway.ThrottleSettings(rate_limit=10, burst_limit=2),
+        )
+
+        # Asociar el plan de uso con la etapa de la API
+        usage_plan.add_api_stage(
+            stage=api.deployment_stage,
+            throttle=[
+                {"method": api_method, "throttle": {"rate_limit": 10, "burst_limit": 2}}
+            ],
+        )
+
+        # Asociar la API Key con el plan de uso
+        usage_plan.add_api_key(api_key)
 
         # Aquí es donde construimos la URL manualmente
         region = Aws.REGION
