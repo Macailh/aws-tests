@@ -17,64 +17,20 @@ class ApigatewayStagesStack(Stack):
         )
 
         # Crea el API Gateway sin despliegue automático
-        api = apigateway.LambdaRestApi(
+        api = apigateway.RestApi(
             self,
-            "MyAPI",
-            handler=my_lambda,
-            proxy=False,
-            deploy=False,  # Evita el despliegue automático
-            default_cors_preflight_options=apigateway.CorsOptions(
-                allow_origins=apigateway.Cors.ALL_ORIGINS,  # Permite todos los orígenes
-                allow_methods=apigateway.Cors.ALL_METHODS,  # Permite todos los métodos
-                allow_headers=[
-                    "Content-Type",
-                    "X-Amz-Date",
-                    "Authorization",
-                    "X-Api-Key",
-                ],  # Especifica las cabeceras permitidas
-            ),
+            "MyApi",
+            rest_api_name="MyApi",
+            description="My api gateway",
+        )
+        # Integración de Lambda para un endpoint específico
+        get_integration = apigateway.LambdaIntegration(
+            my_lambda, request_templates={"application/json": '{ "statusCode": "200" }'}
         )
 
-        # Crea el primer despliegue para el stage 'dev'
-        dev_deployment = apigateway.Deployment(
-            self,
-            "DevDeployment",
-            api=api,
-            # Es opcional agregar una descripción a tus despliegues
-            description="Deployment for the development stage",
-        )
-
-        # Crea el stage 'dev' utilizando el despliegue anterior
-        dev_stage = apigateway.Stage(
-            self,
-            "DevStage",
-            deployment=dev_deployment,
-            stage_name="dev",
-        )
-
-        # Opcionalmente, añade el recurso '/docs' específicamente para 'dev'
-        api.root.add_method("GET")
-        # docs = api.root.add_resource('docs')
-        # docs.add_method('GET')  # Define cómo manejarás las solicitudes GET a '/docs'
-
-        # Crea el segundo despliegue para el stage 'prod'
-        prod_deployment = apigateway.Deployment(
-            self,
-            "ProdDeployment",
-            api=api,
-            description="Deployment for the production stage",
-        )
-
-        # Crea el stage 'prod' utilizando el despliegue anterior
-        prod_stage = apigateway.Stage(
-            self,
-            "ProdStage",
-            deployment=prod_deployment,
-            stage_name="prod",
-        )
-
-        # Asigna uno de los stages como predeterminado, si es necesario
-        # api.deployment_stage = dev_stage
+        # Definir un recurso y método GET
+        api_resource = api.root.add_resource("myresource")
+        api_resource.add_method("GET", get_integration)
 
         # Aquí es donde construimos la URL manualmente
         region = Aws.REGION
