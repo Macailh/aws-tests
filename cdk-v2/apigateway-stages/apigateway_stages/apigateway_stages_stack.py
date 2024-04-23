@@ -28,7 +28,9 @@ class ApigatewayStagesStack(Stack):
 
         # Definir un recurso y método GET
         api_resource = api.root.add_resource("myresource")
-        api_method = api_resource.add_method("GET", get_integration)
+        api_method = api_resource.add_method(
+            "GET", get_integration, api_key_required=True
+        )
 
         # Crear una API Key
         api_key = api.add_api_key("ApiKey", api_key_name="MyApiKey")
@@ -44,7 +46,10 @@ class ApigatewayStagesStack(Stack):
         usage_plan.add_api_stage(
             stage=api.deployment_stage,
             throttle=[
-                {"method": api_method, "throttle": {"rate_limit": 10, "burst_limit": 2}}
+                apigateway.ThrottlingPerMethod(
+                    method=api_method,
+                    throttle=apigateway.ThrottleSettings(rate_limit=10, burst_limit=2),
+                )
             ],
         )
 
